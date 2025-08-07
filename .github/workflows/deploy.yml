@@ -1,0 +1,97 @@
+# .github/workflows/deploy.yml
+name: Deploy E-commerce App to AWS EC2
+
+# Event pemicu
+on:
+  push:
+    branches:
+      - main # Memicu workflow setiap kali ada push ke branch main
+
+# Variabel lingkungan
+env:
+  DOCKER_HUB_USERNAME: luqmanul25
+  BACKEND_APP_NAME: uts-backend-app
+  FRONTEND_APP_NAME: uts-frontend-app
+
+# Daftar pekerjaan (jobs)
+jobs:
+  # Job untuk membangun dan mendeploy aplikasi backend
+  build-and-deploy-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      - name: Build and push backend image
+        run: |
+          # Perintah docker build dijalankan dari root, jadi path ke folder backend-app harus disertakan
+          docker build -t ${DOCKER_HUB_USERNAME}/${BACKEND_APP_NAME}:latest ./backend-app
+          docker push ${DOCKER_HUB_USERNAME}/${BACKEND_APP_NAME}:latest
+
+      - name: Deploy backend to EC2
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{ secrets.EC2_FRONTEND_IP }}
+          username: ec2-user
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # Menggunakan SSH forwarding untuk mengakses pc-backend dari pc-frontend
+            ssh -A -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_BACKEND_IP }} << 'EOF'
+              # Hapus container lama jika ada
+              docker stop backend-container || true
+              docker rm backend-container || true
+              
+              # Tarik image terbaru dari Docker Hub
+              docker pull ${{ env.DOCKER_HUB_USERNAME }}/${{ env.BACKEND_APP_NAME }}:latest
+              
+              # Jalankan container baru dengan variabel lingkungan RDS
+              docker run -d -p 5000:5000 --name backend-container \
+                -e DB_HOST='uts-db.c9slyp220weszd.ap-southeast-2.rds.amazonaws.com' \
+                -e DB_USER='${{ secrets.DB_USER }}' \
+                -e DB_PASSWORD='${{ secrets.DB_PASSWORD }}' \
+                -e DB_NAME='uts_db_product' \
+                ${{ env.DOCKER_HUB_USERNAME }}/${{ env.BACKEND_APP_NAME }}:latest
+              
+              # Cek status container
+              docker ps
+            EOF
+
+  # Job untuk membangun dan mendeploy aplikasi frontend
+  build-and-deploy-frontend:
+    # Pekerjaan ini akan dijalankan setelah pekerjaan backend selesai
+    needs: build-and-deploy-backend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      - name: Build and push frontend image
+        run: |
+          docker build -t ${DOCKER_HUB_USERNAME}/${FRONTEND_APP_NAME}:latest ./frontend-app
+          docker push ${DOCKER_HUB_USERNAME}/${FRONTEND_APP_NAME}:latest
+
+      - name: Deploy frontend to EC2
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{ secrets.EC2_FRONTEND_IP }}
+          username: ec2-user
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            docker stop frontend-container || true
+            docker rm frontend-container || true
+            docker pull ${{ env.DOCKER_HUB_USERNAME }}/${{ env.FRONTEND_APP_NAME }}:latest
+            docker run -d -p 80:80 --name frontend-container \
+              ${{ env.DOCKER_HUB_USERNAME }}/${{ env.FRONTEND_APP_NAME }}:latest
+            docker ps

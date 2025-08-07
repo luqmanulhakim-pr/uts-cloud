@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>UTS Awan Kinton</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+      }
+      .product-card {
+        transition: all 0.3s ease-in-out;
+      }
+      .product-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      }
+      .gradient-bg {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      }
+      .glass-effect {
+        background: rgba(255, 255, 255, 0.25);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+      }
+    </style>
+  </head>
+  <body class="p-4 min-h-screen">
+    <div class="container mx-auto max-w-6xl mt-8">
+      <!-- Header -->
+      <div class="text-center mb-12">
+        <h1
+          class="text-5xl md:text-6xl font-bold text-white mb-4 drop-shadow-lg"
+        >
+          🛍️ E-Commerce Manager
+        </h1>
+        <p class="text-xl text-white/80 font-light">
+          Kelola produk dengan mudah dan elegan
+        </p>
+      </div>
+
+      <!-- Main Content Container -->
+      <div class="bg-white/95 backdrop-blur-sm p-8 rounded-3xl shadow-2xl">
+        <!-- Form untuk Tambah/Edit Produk -->
+        <div
+          class="mb-12 p-8 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-2xl shadow-inner border border-blue-200"
+        >
+          <div class="flex items-center mb-6">
+            <div
+              class="w-3 h-8 bg-gradient-to-b from-blue-500 to-indigo-600 rounded-full mr-4"
+            ></div>
+            <h2 class="text-3xl font-bold text-gray-800" id="form-title">
+              ✨ Tambah Produk Baru
+            </h2>
+          </div>
+          <form id="product-form" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-2">
+              <label
+                for="product-name"
+                class="block text-sm font-semibold text-gray-700"
+                >📝 Nama Produk</label
+              >
+              <input
+                type="text"
+                id="product-name"
+                name="name"
+                required
+                class="w-full border-2 border-gray-200 rounded-xl shadow-sm p-4 focus:ring-4 focus:ring-blue-200 focus:border-blue-400 transition-all duration-200 text-gray-700 placeholder-gray-400"
+                placeholder="Masukkan nama produk..."
+              />
+            </div>
+            <div class="space-y-2">
+              <label
+                for="product-price"
+                class="block text-sm font-semibold text-gray-700"
+                >💰 Harga</label
+              >
+              <input
+                type="number"
+                id="product-price"
+                name="price"
+                step="0.01"
+                required
+                class="w-full border-2 border-gray-200 rounded-xl shadow-sm p-4 focus:ring-4 focus:ring-blue-200 focus:border-blue-400 transition-all duration-200 text-gray-700 placeholder-gray-400"
+                placeholder="0.00"
+              />
+            </div>
+            <div class="md:col-span-2 space-y-2">
+              <label
+                for="product-image-url"
+                class="block text-sm font-semibold text-gray-700"
+                >🖼️ URL Gambar (S3)</label
+              >
+              <input
+                type="url"
+                id="product-image-url"
+                name="image_url"
+                class="w-full border-2 border-gray-200 rounded-xl shadow-sm p-4 focus:ring-4 focus:ring-blue-200 focus:border-blue-400 transition-all duration-200 text-gray-700 placeholder-gray-400"
+                placeholder="https://uts-bucket-assets.s3.ap-southeast-2.amazonaws.com/gambar.jpg"
+              />
+            </div>
+            <div class="md:col-span-2 flex justify-end space-x-4 pt-4">
+              <button
+                type="submit"
+                id="submit-button"
+                class="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center space-x-2"
+              >
+                <span>➕</span>
+                <span>Tambah Produk</span>
+              </button>
+              <button
+                type="button"
+                id="cancel-edit-button"
+                class="hidden bg-gradient-to-r from-gray-400 to-gray-600 hover:from-gray-500 hover:to-gray-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center space-x-2"
+              >
+                <span>❌</span>
+                <span>Batal Edit</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Daftar Produk -->
+        <div class="mb-8">
+          <div class="flex items-center mb-8">
+            <div
+              class="w-3 h-8 bg-gradient-to-b from-emerald-500 to-teal-600 rounded-full mr-4"
+            ></div>
+            <h2 class="text-3xl font-bold text-gray-800">🏪 Daftar Produk</h2>
+          </div>
+          <div
+            id="products-container"
+            class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+          >
+            <!-- Products will be loaded here -->
+          </div>
+
+          <!-- Loading State -->
+          <div id="loading-message" class="text-center py-16">
+            <div class="inline-flex items-center space-x-3">
+              <div
+                class="animate-spin rounded-full h-8 w-8 border-4 border-blue-500 border-t-transparent"
+              ></div>
+              <span class="text-xl text-gray-600 font-medium"
+                >Memuat produk...</span
+              >
+            </div>
+          </div>
+
+          <!-- Error State -->
+          <div id="error-message" class="hidden text-center py-16">
+            <div
+              class="bg-red-50 border-2 border-red-200 rounded-2xl p-8 max-w-md mx-auto"
+            >
+              <div class="text-4xl mb-4">😔</div>
+              <p class="text-red-600 font-semibold text-lg">
+                Gagal memuat produk
+              </p>
+              <p class="text-red-500 text-sm mt-2">Silakan coba lagi nanti</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const productsContainer = document.getElementById("products-container");
+        const loadingMessage = document.getElementById("loading-message");
+        const errorMessage = document.getElementById("error-message");
+        const productForm = document.getElementById("product-form");
+        const formTitle = document.getElementById("form-title");
+        const submitButton = document.getElementById("submit-button");
+        const cancelEditButton = document.getElementById("cancel-edit-button");
+
+        let editingProductId = null; // Untuk melacak produk yang sedang diedit
+
+        // Base URL untuk API - dengan fallback
+        const API_BASE_URLS = [
+          "", // Try current domain first (for reverse proxy)
+          "http://localhost:5000", // Fallback to direct backend
+          "http://127.0.0.1:5000", // Alternative localhost
+        ];
+
+        let currentApiBaseIndex = 0;
+
+        async function makeApiRequest(endpoint, options = {}) {
+          for (let i = currentApiBaseIndex; i < API_BASE_URLS.length; i++) {
+            try {
+              const baseUrl = API_BASE_URLS[i];
+              const url = baseUrl + endpoint;
+              console.log(`Trying API request to: ${url}`);
+
+              const response = await fetch(url, options);
+              console.log(
+                `Response from ${url}:`,
+                response.status,
+                response.statusText
+              );
+
+              // If successful, remember this base URL for future requests
+              if (response.ok) {
+                currentApiBaseIndex = i;
+                return response;
+              }
+
+              // If it's a server error (5xx) or client error (4xx), try next URL
+              if (response.status >= 400) {
+                console.log(
+                  `Server returned ${response.status}, trying next URL...`
+                );
+                continue;
+              }
+
+              return response;
+            } catch (error) {
+              console.error(
+                `Error with ${API_BASE_URLS[i]}${endpoint}:`,
+                error
+              );
+              if (i === API_BASE_URLS.length - 1) {
+                throw error;
+              }
+            }
+          }
+          throw new Error("All API endpoints failed");
+        }
+
+        // Fungsi untuk mengambil dan menampilkan produk
+        async function fetchProducts() {
+          try {
+            console.log("Starting fetchProducts...");
+            loadingMessage.classList.remove("hidden");
+            errorMessage.classList.add("hidden");
+
+            const response = await makeApiRequest("/api/products");
+
+            const contentType = response.headers.get("content-type");
+            console.log("Content-Type:", contentType);
+
+            if (!contentType || !contentType.includes("application/json")) {
+              const textResponse = await response.text();
+              console.error("Non-JSON response:", textResponse);
+              throw new Error(
+                `Server returned HTML instead of JSON. This usually means the backend is not running or there's a routing issue.\n\nResponse: ${textResponse.substring(
+                  0,
+                  200
+                )}...`
+              );
+            }
+
+            const products = await response.json();
+            console.log("Products received:", products);
+            console.log("Number of products:", products.length);
+
+            loadingMessage.classList.add("hidden");
+            renderProducts(products);
+          } catch (error) {
+            console.error("Detailed error in fetchProducts:", error);
+
+            // Update error message display with more helpful information
+            const errorDiv = document.querySelector(
+              "#error-message .bg-red-50 p:last-child"
+            );
+            if (errorDiv) {
+              if (error.message.includes("HTML instead of JSON")) {
+                errorDiv.innerHTML = `
+                  <strong>Backend Connection Issue:</strong><br>
+                  • Pastikan Flask backend berjalan di port 5000<br>
+                  • Jalankan: <code>python app.py</code><br>
+                  • Atau periksa konfigurasi Nginx reverse proxy<br><br>
+                  <small>Error: ${error.message}</small>
+                `;
+              } else {
+                errorDiv.textContent = `Error: ${error.message}`;
+              }
+            }
+
+            errorMessage.classList.remove("hidden");
+            loadingMessage.classList.add("hidden");
+          }
+        }
+
+        // Fungsi untuk merender produk ke UI
+        function renderProducts(products) {
+          productsContainer.innerHTML = "";
+          if (products.length === 0) {
+            productsContainer.innerHTML = `
+                        <div class="col-span-full text-center py-16">
+                            <div class="bg-gray-50 border-2 border-gray-200 rounded-2xl p-12 max-w-md mx-auto">
+                                <div class="text-6xl mb-4">📦</div>
+                                <p class="text-gray-500 font-semibold text-xl">Belum ada produk</p>
+                                <p class="text-gray-400 text-sm mt-2">Tambahkan produk pertama Anda</p>
+                            </div>
+                        </div>
+                    `;
+            return;
+          }
+          products.forEach((product) => {
+            const productCard = `
+                        <div class="product-card bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 hover:border-blue-200" data-id="${
+                          product.id
+                        }">
+                            <div class="relative overflow-hidden">
+                                <img src="${
+                                  product.image_url ||
+                                  "https://placehold.co/400x300/e0e0e0/000000?text=No+Image"
+                                }"
+                                     alt="${
+                                       product.name
+                                     }" class="w-full h-56 object-cover object-center transform hover:scale-110 transition-transform duration-300"
+                                     onerror="this.onerror=null;this.src='https://placehold.co/400x300/e0e0e0/000000?text=Image+Error';">
+                                <div class="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1">
+                                    <span class="text-xs font-semibold text-gray-600">ID: ${
+                                      product.id
+                                    }</span>
+                                </div>
+                            </div>
+                            <div class="p-6">
+                                <h3 class="text-xl font-bold text-gray-800 mb-3 line-clamp-2">${
+                                  product.name
+                                }</h3>
+                                <div class="flex items-center justify-between mb-6">
+                                    <div class="flex items-center space-x-2">
+                                        <span class="text-sm text-gray-500">Harga:</span>
+                                    </div>
+                                    <span class="text-2xl font-bold text-emerald-600">Rp${parseFloat(
+                                      product.price
+                                    ).toLocaleString("id-ID")}</span>
+                                </div>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <button class="edit-button bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white font-semibold py-3 px-4 rounded-xl shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200 flex items-center justify-center space-x-2" data-id="${
+                                      product.id
+                                    }">
+                                        <span>✏️</span>
+                                        <span>Edit</span>
+                                    </button>
+                                    <button class="delete-button bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white font-semibold py-3 px-4 rounded-xl shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200 flex items-center justify-center space-x-2" data-id="${
+                                      product.id
+                                    }">
+                                        <span>🗑️</span>
+                                        <span>Hapus</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+            productsContainer.innerHTML += productCard;
+          });
+
+          // Tambahkan event listener untuk tombol edit dan delete
+          document.querySelectorAll(".edit-button").forEach((button) => {
+            button.addEventListener("click", handleEdit);
+          });
+          document.querySelectorAll(".delete-button").forEach((button) => {
+            button.addEventListener("click", handleDelete);
+          });
+        }
+
+        // Handler untuk submit form (Tambah atau Edit)
+        productForm.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          console.log("Form submitted");
+
+          const name = document.getElementById("product-name").value;
+          const price = parseFloat(
+            document.getElementById("product-price").value
+          );
+          const imageUrl = document.getElementById("product-image-url").value;
+
+          console.log("Form data:", { name, price, imageUrl });
+
+          const productData = { name, price, image_url: imageUrl };
+
+          try {
+            let endpoint;
+            let method;
+
+            if (editingProductId) {
+              // Mode Edit
+              endpoint = `/api/products/${editingProductId}`;
+              method = "PUT";
+              console.log("Updating product:", editingProductId);
+            } else {
+              // Mode Tambah
+              endpoint = "/api/products";
+              method = "POST";
+              console.log("Adding new product");
+            }
+
+            const response = await makeApiRequest(endpoint, {
+              method: method,
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(productData),
+            });
+
+            console.log(
+              "Submit response:",
+              response.status,
+              response.statusText
+            );
+
+            if (!response.ok) {
+              const errorResponse = await response.json().catch(() => ({}));
+              const errorMessageText =
+                errorResponse.details ||
+                errorResponse.message ||
+                `HTTP ${response.status}: ${response.statusText}`;
+              throw new Error(errorMessageText);
+            }
+
+            const result = await response.json();
+            console.log("Submit result:", result);
+
+            // Reset form dan refresh daftar produk
+            productForm.reset();
+            editingProductId = null;
+            formTitle.textContent = "✨ Tambah Produk Baru";
+            submitButton.innerHTML =
+              "<span>➕</span><span>Tambah Produk</span>";
+            cancelEditButton.classList.add("hidden");
+            errorMessage.classList.add("hidden");
+
+            console.log("Refreshing products list...");
+            fetchProducts();
+          } catch (error) {
+            console.error("Error submitting product:", error);
+            const errorDiv = document.querySelector(
+              "#error-message .bg-red-50 p:last-child"
+            );
+            if (errorDiv) {
+              errorDiv.textContent = `Gagal menyimpan produk: ${error.message}`;
+            }
+            errorMessage.classList.remove("hidden");
+          }
+        });
+
+        // Handler untuk tombol Edit
+        async function handleEdit(event) {
+          const productId = event.target.closest("button").dataset.id;
+          console.log("Editing product:", productId);
+
+          try {
+            const response = await makeApiRequest(`/api/products/${productId}`);
+            console.log("Edit fetch response:", response.status);
+
+            if (!response.ok) {
+              throw new Error(
+                `HTTP ${response.status}: ${response.statusText}`
+              );
+            }
+
+            const product = await response.json();
+            console.log("Product for edit:", product);
+
+            // Isi form dengan data produk yang akan diedit
+            document.getElementById("product-name").value = product.name || "";
+            document.getElementById("product-price").value =
+              product.price || "";
+            document.getElementById("product-image-url").value =
+              product.image_url || "";
+
+            editingProductId = productId;
+            formTitle.textContent = "✏️ Edit Produk";
+            submitButton.innerHTML =
+              "<span>💾</span><span>Simpan Perubahan</span>";
+            cancelEditButton.classList.remove("hidden");
+            errorMessage.classList.add("hidden");
+          } catch (error) {
+            console.error("Error fetching product for edit:", error);
+            const errorDiv = document.querySelector(
+              "#error-message .bg-red-50 p:last-child"
+            );
+            if (errorDiv) {
+              errorDiv.textContent = `Gagal mengambil data produk: ${error.message}`;
+            }
+            errorMessage.classList.remove("hidden");
+          }
+        }
+
+        // Handler untuk tombol Batal Edit
+        cancelEditButton.addEventListener("click", () => {
+          productForm.reset();
+          editingProductId = null;
+          formTitle.textContent = "✨ Tambah Produk Baru";
+          submitButton.innerHTML = "<span>➕</span><span>Tambah Produk</span>";
+          cancelEditButton.classList.add("hidden");
+          errorMessage.classList.add("hidden");
+        });
+
+        // Handler untuk tombol Hapus
+        async function handleDelete(event) {
+          const productId = event.target.closest("button").dataset.id;
+          console.log("Deleting product:", productId);
+
+          if (confirm("Apakah Anda yakin ingin menghapus produk ini?")) {
+            try {
+              const response = await makeApiRequest(
+                `/api/products/${productId}`,
+                {
+                  method: "DELETE",
+                }
+              );
+
+              console.log("Delete response:", response.status);
+
+              if (!response.ok) {
+                const errorResponse = await response.json().catch(() => ({}));
+                const errorMessageText =
+                  errorResponse.details ||
+                  errorResponse.message ||
+                  `HTTP ${response.status}: ${response.statusText}`;
+                throw new Error(errorMessageText);
+              }
+
+              console.log("Product deleted successfully");
+              fetchProducts();
+            } catch (error) {
+              console.error("Error deleting product:", error);
+              const errorDiv = document.querySelector(
+                "#error-message .bg-red-50 p:last-child"
+              );
+              if (errorDiv) {
+                errorDiv.textContent = `Gagal menghapus produk: ${error.message}`;
+              }
+              errorMessage.classList.remove("hidden");
+            }
+          }
+        }
+
+        // Muat produk saat halaman pertama kali dimuat
+        fetchProducts();
+      });
+    </script>
+  </body>
+</html>
