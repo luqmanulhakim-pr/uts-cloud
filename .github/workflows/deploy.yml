@@ -5,7 +5,7 @@ name: Deploy Frontend to AWS EC2
 on:
   push:
     branches:
-      - main # Memicu workflow setiap kali ada push ke branch main
+      - main 
 
 # Variabel lingkungan
 env:
