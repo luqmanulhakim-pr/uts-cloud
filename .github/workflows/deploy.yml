@@ -38,17 +38,26 @@ jobs:
           host: ${{ secrets.EC2_FRONTEND_IP }}
           username: ec2-user
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          timeout: 30s
           script: |
+            # Set variables (fix untuk environment variables)
+            DOCKER_HUB_USERNAME="luqmanul25"
+            FRONTEND_APP_NAME="uts-frontend-app"
+
             # Menghentikan dan menghapus container lama secara paksa
             docker stop frontend-container || true
             docker rm -f frontend-container || true
-            
+
             # Menarik image terbaru dari Docker Hub
-            docker pull ${{ env.DOCKER_HUB_USERNAME }}/${{ env.FRONTEND_APP_NAME }}:latest
-            
+            echo "Pulling image: ${DOCKER_HUB_USERNAME}/${FRONTEND_APP_NAME}:latest"
+            docker pull ${DOCKER_HUB_USERNAME}/${FRONTEND_APP_NAME}:latest
+
             # Menjalankan container baru
             docker run -d -p 80:80 --name frontend-container \
-              ${{ env.DOCKER_HUB_USERNAME }}/${{ env.FRONTEND_APP_NAME }}:latest
-            
+              --restart unless-stopped \
+              ${DOCKER_HUB_USERNAME}/${FRONTEND_APP_NAME}:latest
+
             # Cek status container
             docker ps
+            docker logs frontend-container --tail 5
